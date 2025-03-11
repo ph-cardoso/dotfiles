@@ -1,0 +1,7 @@
+alias rzsh="source ~/.zshrc && echo '~/.zshrc reloaded!'"
+alias ezsh="code ~/.zshrc"
+alias grep="rg" # https://github.com/BurntSushi/ripgrep
+alias find="fd" # https://github.com/sharkdp/fd
+alias ls="eza --color=always --long --git --no-filesize --icons=always --no-time --no-user --no-permissions" # https://github.com/eza-community/eza
+alias cat="bat"
+alias neofetch="fastfetch -c neofetch.jsonc"
