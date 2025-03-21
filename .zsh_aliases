@@ -5,3 +5,5 @@ alias find="fd" # https://github.com/sharkdp/fd
 alias ls="eza --color=always --long --git --no-filesize --icons=always --no-time --no-user --no-permissions" # https://github.com/eza-community/eza
 alias cat="bat"
 alias neofetch="fastfetch -c neofetch.jsonc"
+alias codepy="code . --profile=py"
+alias codejs="code . --profile=js"

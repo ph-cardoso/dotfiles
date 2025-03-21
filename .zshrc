@@ -14,6 +14,7 @@ setopt SHARE_HISTORY      # Share history between sessions
 export PATH="$PATH:$HOME/.local/bin"
 
 # Use modern completion system
+fpath+=~/.zfunc
 autoload -Uz compinit
 compinit
 
@@ -125,3 +126,8 @@ export HOMEBREW_NO_ANALYTICS=1
 export PYENV_ROOT="$HOME/.pyenv"
 [[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"
 eval "$(pyenv init - zsh)"
+eval "$(pyenv virtualenv-init -)"
+
+# ~~~~~~~~~~~~~~~ astral.sh/uv ~~~~~~~~~~~~~~~
+eval "$(uv generate-shell-completion zsh)"
+eval "$(uvx --generate-shell-completion zsh)"
