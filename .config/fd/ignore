@@ -1,0 +1,15 @@
+.git
+Public/
+Pictures/
+OneDrive
+Music/
+Movies/
+Library/
+Documents/
+Desktop/
+.vscode/
+.Trash/
+.cursor/
+.cache/
+.local/
+.tmux/

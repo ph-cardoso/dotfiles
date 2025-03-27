@@ -1,0 +1,17 @@
+font-family = "JetBrainsMono Nerd Font"
+font-size = 14
+
+theme = "catppuccin-mocha.conf"
+background-opacity = 0.75
+background-blur = 10
+
+macos-titlebar-style = "hidden"
+macos-option-as-alt = true
+
+window-padding-balance = true 
+window-padding-x = 12
+
+cursor-click-to-move = true
+link-url = true
+
+clipboard-trim-trailing-spaces = true
