@@ -10,7 +10,7 @@
   "workbench.iconTheme": "symbols",
   "workbench.productIconTheme": "fluent-icons",
   "workbench.editor.tabSizing": "shrink",
-  "workbench.activityBar.location": "hidden",
+  "workbench.activityBar.location": "top",
   "workbench.startupEditor": "none",
   "workbench.editor.labelFormat": "short",
   "workbench.layoutControl.enabled": false,

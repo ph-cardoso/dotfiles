@@ -11,9 +11,11 @@ setopt HIST_IGNORE_DUPS   # Don't save duplicate lines
 setopt SHARE_HISTORY      # Share history between sessions
 
 # ~~~~~~~~~~~~~~~ PATH ~~~~~~~~~~~~~~~~~~~~~~~~
-export PATH="$PATH:$HOME/.local/bin"
+if [ -d "$HOME/.local/bin" ] ; then
+    export PATH="$HOME/.local/bin:$PATH"
+fi
 
-# Use modern completion system
+# ~~~~~~~~~~~~~~~ Completions ~~~~~~~~~~~~~~~
 fpath+=~/.zfunc
 autoload -Uz compinit
 compinit
@@ -113,7 +115,14 @@ eval "$(zoxide init zsh)"
 export _ZO_ECHO=1
 
 # ~~~~~~~~~~~~~~~ homebrew ~~~~~~~~~~~~~~~
-eval "$(/opt/homebrew/bin/brew shellenv)"
+case "$OSTYPE" in
+  darwin*)
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+  ;;
+  linux*)
+    eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+  ;;
+esac
 export HOMEBREW_NO_ANALYTICS=1
 
 # ~~~~~~~~~~~~~~~ pyenv ~~~~~~~~~~~~~~~
@@ -132,8 +141,19 @@ eval "$(uv generate-shell-completion zsh)"
 eval "$(uvx --generate-shell-completion zsh)"
 
 # ~~~~~~~~~~~~~~~ pnpm ~~~~~~~~~~~~~~~~~~~~~~~~
-export PNPM_HOME="/Users/ph-cardoso/Library/pnpm"
-case ":$PATH:" in
-  *":$PNPM_HOME:"*) ;;
-  *) export PATH="$PNPM_HOME:$PATH" ;;
+case "$OSTYPE" in
+  darwin*)
+    export PNPM_HOME="/Users/ph-cardoso/Library/pnpm"
+    case ":$PATH:" in
+      *":$PNPM_HOME:"*) ;;
+      *) export PATH="$PNPM_HOME:$PATH" ;;
+    esac
+  ;;
+  linux*)
+    export PNPM_HOME="/home/ph-cardoso/.local/share/pnpm"
+    case ":$PATH:" in
+      *":$PNPM_HOME:"*) ;;
+      *) export PATH="$PNPM_HOME:$PATH" ;;
+    esac
+  ;;
 esac
