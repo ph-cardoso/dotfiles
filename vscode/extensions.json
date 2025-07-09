@@ -22,7 +22,7 @@
   "charliermarsh.ruff",
   "miguelsolorio.min-theme",
   "miguelsolorio.symbols",
-  "pmndrs.pmndrs",
+  "adamhartford.vscode-base64",
   "esbenp.prettier-vscode",
   "dbaeumer.vscode-eslint",
   "naumovs.color-highlight",
