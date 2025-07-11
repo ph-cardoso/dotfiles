@@ -115,15 +115,15 @@ eval "$(zoxide init zsh)"
 export _ZO_ECHO=1
 
 # ~~~~~~~~~~~~~~~ homebrew ~~~~~~~~~~~~~~~
-case "$OSTYPE" in
-  darwin*)
-    eval "$(/opt/homebrew/bin/brew shellenv)"
-  ;;
-  linux*)
-    eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-  ;;
-esac
-export HOMEBREW_NO_ANALYTICS=1
+# case "$OSTYPE" in
+#   darwin*)
+#     eval "$(/opt/homebrew/bin/brew shellenv)"
+#   ;;
+#   linux*)
+#     eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+#   ;;
+# esac
+# export HOMEBREW_NO_ANALYTICS=1
 
 # ~~~~~~~~~~~~~~~ pyenv ~~~~~~~~~~~~~~~
 # export PYENV_ROOT="$HOME/.pyenv"
