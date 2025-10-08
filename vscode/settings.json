@@ -24,7 +24,7 @@
   "editor.fontSize": 14,
   "editor.lineHeight": 1.8,
   "editor.renderLineHighlight": "gutter",
-  "editor.scrollbar.vertical": "hidden",
+  "editor.scrollbar.vertical": "auto",
   "editor.scrollbar.horizontal": "hidden",
   "editor.parameterHints.enabled": false,
   "editor.suggestSelection": "first",
