@@ -1,16 +1,23 @@
 # Use emacs keybindings even if our EDITOR is set to vi
 bindkey -e
 
-# ~~~~~~~~~~~~~~~ History ~~~~~~~~~~~~~~~~~~~~~~~~
-HISTFILE=~/.zsh_history
-HISTSIZE=100000
-SAVEHIST=100000
+# ~~~~~~~~~~~~~~~ Config Files ~~~~~~~~~~~~~~~~~~~
+export ZSH_COMPDUMP="${XDG_CACHE_HOME:-$HOME/.cache}/zsh/zcompdump"
 
-setopt HIST_IGNORE_SPACE  # Don't save when prefixed with space
-setopt HIST_IGNORE_DUPS   # Don't save duplicate lines
-setopt HIST_REDUCE_BLANKS  # Remove espaços extras
-setopt HIST_VERIFY         # Confirma antes de executar histórico com !n
-setopt SHARE_HISTORY      # Share history between sessions
+# ~~~~~~~~~~~~~~~ History ~~~~~~~~~~~~~~~~~~~~~~~~
+export HISTFILE=~/.zsh_history
+export HISTSIZE=100000
+export SAVEHIST=$HISTSIZE
+
+setopt EXTENDED_HISTORY           # Write the history file in the ':start:elapsed;command' format.
+setopt HIST_EXPIRE_DUPS_FIRST     # Expire a duplicate event first when trimming history.
+setopt HIST_FIND_NO_DUPS          # Do not display a previously found event.
+setopt HIST_IGNORE_ALL_DUPS       # Delete an old recorded event if a new event is a duplicate.
+setopt HIST_IGNORE_DUPS           # Do not record an event that was just recorded again.
+setopt HIST_IGNORE_SPACE          # Do not record an event starting with a space.
+setopt HIST_SAVE_NO_DUPS          # Do not write a duplicate event to the history file.
+setopt HIST_REDUCE_BLANKS         # Remove espaços extras
+setopt SHARE_HISTORY              # Share history between all sessions.
 
 # ~~~~~~~~~~~~~~~ PATH ~~~~~~~~~~~~~~~~~~~~~~~~
 if [ -d "$HOME/.local/bin" ] ; then
@@ -31,7 +38,11 @@ export HOMEBREW_NO_ANALYTICS=1
 # ~~~~~~~~~~~~~~~ Completions ~~~~~~~~~~~~~~~
 fpath+=~/.zfunc
 autoload -Uz compinit
-compinit
+if [[ -n "$ZSH_COMPDUMP" ]]; then
+  compinit -d "$ZSH_COMPDUMP"
+else
+  compinit
+fi
 
 zstyle ':completion:*' auto-description 'specify: %d'
 zstyle ':completion:*' completer _expand _complete _correct _approximate
