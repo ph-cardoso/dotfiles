@@ -5,9 +5,9 @@ bindkey -e
 export ZSH_COMPDUMP="${XDG_CACHE_HOME:-$HOME/.cache}/zsh/zcompdump"
 
 # ~~~~~~~~~~~~~~~ History ~~~~~~~~~~~~~~~~~~~~~~~~
-export HISTFILE=~/.zsh_history
-export HISTSIZE=100000
-export SAVEHIST=$HISTSIZE
+HISTFILE=~/.zsh_history
+HISTSIZE=100000
+SAVEHIST=100000
 
 setopt EXTENDED_HISTORY           # Write the history file in the ':start:elapsed;command' format.
 setopt HIST_EXPIRE_DUPS_FIRST     # Expire a duplicate event first when trimming history.
