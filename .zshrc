@@ -8,12 +8,25 @@ SAVEHIST=100000
 
 setopt HIST_IGNORE_SPACE  # Don't save when prefixed with space
 setopt HIST_IGNORE_DUPS   # Don't save duplicate lines
+setopt HIST_REDUCE_BLANKS  # Remove espaços extras
+setopt HIST_VERIFY         # Confirma antes de executar histórico com !n
 setopt SHARE_HISTORY      # Share history between sessions
 
 # ~~~~~~~~~~~~~~~ PATH ~~~~~~~~~~~~~~~~~~~~~~~~
 if [ -d "$HOME/.local/bin" ] ; then
     export PATH="$HOME/.local/bin:$PATH"
 fi
+
+# ~~~~~~~~~~~~~~~ homebrew ~~~~~~~~~~~~~~~
+case "$OSTYPE" in
+  darwin*)
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+  ;;
+  linux*)
+    eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+  ;;
+esac
+export HOMEBREW_NO_ANALYTICS=1
 
 # ~~~~~~~~~~~~~~~ Completions ~~~~~~~~~~~~~~~
 fpath+=~/.zfunc
@@ -37,43 +50,20 @@ zstyle ':completion:*' verbose true
 zstyle ':completion:*:*:kill:*:processes' list-colors '=(#b) #([0-9]#)*=0=01;31'
 zstyle ':completion:*:kill:*' command 'ps -u $USER -o pid,%cpu,tty,cputime,cmd'
 
-# ~~~~~~~~~~~~~~~ Zinit ~~~~~~~~~~~~~~~
-if [[ ! -f $HOME/.local/share/zinit/zinit.git/zinit.zsh ]]; then
-  print -P "%F{33} %F{220}Installing %F{33}ZDHARMA-CONTINUUM%F{220} Initiative Plugin Manager (%F{33}zdharma-continuum/zinit%F{220})…%f"
-  command mkdir -p "$HOME/.local/share/zinit" && command chmod g-rwX "$HOME/.local/share/zinit"
-  command git clone https://github.com/zdharma-continuum/zinit "$HOME/.local/share/zinit/zinit.git" && \
-    print -P "%F{33} %F{34}Installation successful.%f%b" || \
-    print -P "%F{160} The clone has failed.%f%b"
-fi
-
-source "$HOME/.local/share/zinit/zinit.git/zinit.zsh"
-autoload -Uz _zinit
-(( ${+_comps} )) && _comps[zinit]=_zinit
-
-
 # ~~~~~~~~~~~~~~~ Plugins ~~~~~~~~~~~~~~~~~~~~~~~~
-zinit light-mode for \
-  zdharma-continuum/zinit-annex-as-monitor \
-  zdharma-continuum/zinit-annex-bin-gem-node \
-  zdharma-continuum/zinit-annex-patch-dl \
-  zdharma-continuum/zinit-annex-rust
-
-zinit light zsh-users/zsh-autosuggestions
-zinit light zdharma-continuum/fast-syntax-highlighting
-
-# zi snippet OMZP::ssh-agent
+[[ -f ~/.zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh ]] && source ~/.zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh
+[[ -f ~/.zsh/plugins/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh ]] && source ~/.zsh/plugins/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh
 
 # ~~~~~~~~~~~~~~~ Sourcing ~~~~~~~~~~~~~~~~~~~~~~~~
-source ~/.zsh_aliases
-source ~/.zsh_functions
-# source ~/.privaterc
+source ~/.zsh/aliases.zsh
+source ~/.zsh/functions.zsh
 
 # ~~~~~~~~~~~~~~~ Starship Prompt ~~~~~~~~~~~~~~~~~~~~~~~~
 eval "$(starship init zsh)"
 
 # ~~~~~~~~~~~~~~~ fzf ~~~~~~~~~~~~~~~~~~~~~~~~
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
-source <(fzf --zsh)
+# source <(fzf --zsh)
 
 export FZF_DEFAULT_COMMAND="fd --hidden --strip-cwd-prefix"
 export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
@@ -114,27 +104,16 @@ _fzf_comprun() {
 eval "$(zoxide init zsh)"
 export _ZO_ECHO=1
 
-# ~~~~~~~~~~~~~~~ homebrew ~~~~~~~~~~~~~~~
-# case "$OSTYPE" in
-#   darwin*)
-#     eval "$(/opt/homebrew/bin/brew shellenv)"
-#   ;;
-#   linux*)
-#     eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-#   ;;
-# esac
-# export HOMEBREW_NO_ANALYTICS=1
-
 # ~~~~~~~~~~~~~~~ pyenv ~~~~~~~~~~~~~~~
 # export PYENV_ROOT="$HOME/.pyenv"
 # [[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"
 # eval "$(pyenv init - zsh)"
 # eval "$(pyenv virtualenv-init -)"
 
-# ~~~~~~~~~~~~~~~ NVM ~~~~~~~~~~~~~~~~~~~~~~~~
-# export NVM_DIR="$HOME/.nvm"
-# [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-# [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+# ~~~~~~~~~~~~~~~ nvm ~~~~~~~~~~~~~~~~~~~~~~~~
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 
 # ~~~~~~~~~~~~~~~ astral.sh/uv ~~~~~~~~~~~~~~~
 eval "$(uv generate-shell-completion zsh)"
@@ -143,14 +122,14 @@ eval "$(uvx --generate-shell-completion zsh)"
 # ~~~~~~~~~~~~~~~ pnpm ~~~~~~~~~~~~~~~~~~~~~~~~
 case "$OSTYPE" in
   darwin*)
-    export PNPM_HOME="/Users/ph-cardoso/Library/pnpm"
+    export PNPM_HOME="$HOME/Library/pnpm"
     case ":$PATH:" in
       *":$PNPM_HOME:"*) ;;
       *) export PATH="$PNPM_HOME:$PATH" ;;
     esac
   ;;
   linux*)
-    export PNPM_HOME="/home/ph-cardoso/.local/share/pnpm"
+    export PNPM_HOME="$HOME/.local/share/pnpm"
     case ":$PATH:" in
       *":$PNPM_HOME:"*) ;;
       *) export PATH="$PNPM_HOME:$PATH" ;;
