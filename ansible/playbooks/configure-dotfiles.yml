@@ -1,0 +1,77 @@
+---
+- name: Configurar dotfiles e plugins
+  hosts: local
+  gather_facts: true
+  vars:
+    dotfiles_root: "{{ playbook_dir | dirname | dirname }}"
+    zsh_plugins:
+      - repo: https://github.com/zsh-users/zsh-autosuggestions.git
+        dest: "{{ ansible_env.HOME }}/.zsh/plugins/zsh-autosuggestions"
+      - repo: https://github.com/zdharma-continuum/fast-syntax-highlighting.git
+        dest: "{{ ansible_env.HOME }}/.zsh/plugins/fast-syntax-highlighting"
+    config_symlinks:
+      - src: "{{ dotfiles_root }}/.config/bat"
+        dest: "{{ ansible_env.HOME }}/.config/bat"
+      - src: "{{ dotfiles_root }}/.config/fd"
+        dest: "{{ ansible_env.HOME }}/.config/fd"
+      - src: "{{ dotfiles_root }}/.config/ghostty"
+        dest: "{{ ansible_env.HOME }}/.config/ghostty"
+      - src: "{{ dotfiles_root }}/.config/starship.toml"
+        dest: "{{ ansible_env.HOME }}/.config/starship.toml"
+      - src: "{{ dotfiles_root }}/.config/tmux"
+        dest: "{{ ansible_env.HOME }}/.config/tmux"
+      - src: "{{ dotfiles_root }}/.config/wezterm"
+        dest: "{{ ansible_env.HOME }}/.config/wezterm"
+  tasks:
+    - name: Garantir diretorio .zsh
+      ansible.builtin.file:
+        path: "{{ ansible_env.HOME }}/.zsh"
+        state: directory
+        mode: "0755"
+
+    - name: Garantir diretorio de plugins do zsh
+      ansible.builtin.file:
+        path: "{{ ansible_env.HOME }}/.zsh/plugins"
+        state: directory
+        mode: "0755"
+
+    - name: Copiar aliases para ~/.zsh/aliases.zsh
+      ansible.builtin.copy:
+        src: "{{ dotfiles_root }}/.zsh/aliases.zsh"
+        dest: "{{ ansible_env.HOME }}/.zsh/aliases.zsh"
+        mode: "0644"
+
+    - name: Copiar functions para ~/.zsh/functions.zsh
+      ansible.builtin.copy:
+        src: "{{ dotfiles_root }}/.zsh/functions.zsh"
+        dest: "{{ ansible_env.HOME }}/.zsh/functions.zsh"
+        mode: "0644"
+
+    - name: Garantir diretorio ~/.config
+      ansible.builtin.file:
+        path: "{{ ansible_env.HOME }}/.config"
+        state: directory
+        mode: "0755"
+
+    - name: Criar symlinks para configuracoes em .config
+      ansible.builtin.file:
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
+        state: link
+        force: true
+      loop: "{{ config_symlinks }}"
+
+    - name: Criar symlink do .zshrc
+      ansible.builtin.file:
+        src: "{{ dotfiles_root }}/.zshrc"
+        dest: "{{ ansible_env.HOME }}/.zshrc"
+        state: link
+        force: true
+
+    - name: Clonar plugins do zsh
+      ansible.builtin.git:
+        repo: "{{ item.repo }}"
+        dest: "{{ item.dest }}"
+        version: HEAD
+        update: true
+      loop: "{{ zsh_plugins }}"
