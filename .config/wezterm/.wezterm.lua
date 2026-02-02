@@ -1,3 +1,4 @@
+-- Config location: %USERPROFILE%\.wezterm.lua
 local wezterm = require 'wezterm'
 local config = {}
 
