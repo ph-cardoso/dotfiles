@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+# Pull an image from the Windows clipboard (WSL) and save it as a PNG.
+# Prints the WSL path to the saved file on success.
+# Usage:  wsl-clip-img            -> saves to /tmp, prints path
+#         wsl-clip-img /path.png  -> saves to the given path
+set -euo pipefail
+
+ps='powershell.exe'
+command -v "$ps" >/dev/null 2>&1 || { echo "powershell.exe not found (WSL interop off?)" >&2; exit 2; }
+
+win_path=$("$ps" -NoProfile -STA -Command '
+  Add-Type -AssemblyName System.Windows.Forms, System.Drawing | Out-Null
+  if (-not [System.Windows.Forms.Clipboard]::ContainsImage()) { exit 1 }
+  $img = [System.Windows.Forms.Clipboard]::GetImage()
+  $p = [System.IO.Path]::Combine($env:TEMP, "wsl-clip-" + [System.Guid]::NewGuid().ToString() + ".png")
+  $img.Save($p, [System.Drawing.Imaging.ImageFormat]::Png)
+  Write-Output $p
+' 2>/dev/null | tr -d '\r' | tail -n1) || { echo "No image in the Windows clipboard." >&2; exit 1; }
+
+[ -n "${win_path:-}" ] || { echo "No image in the Windows clipboard." >&2; exit 1; }
+
+src=$(wslpath -u "$win_path")
+if [ "$#" -ge 1 ]; then
+  dest=$1
+  mv -f "$src" "$dest"
+else
+  dest=$(mktemp /tmp/clip-img-XXXXXX.png)
+  mv -f "$src" "$dest"
+fi
+echo "$dest"

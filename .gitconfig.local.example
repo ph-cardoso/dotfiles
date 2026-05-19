@@ -1,0 +1,25 @@
+# Copy to ~/.gitconfig.local and fill in machine-specific values.
+# This file is gitignored. The portable ~/.gitconfig [include]s it.
+
+[user]
+	name = your-name
+	email = you@example.com
+	# Public SSH key used for commit signing (safe to share):
+	signingkey = ssh-ed25519 AAAA...your-public-key...
+
+[gpg]
+	format = ssh
+
+# --- 1Password SSH commit signing on WSL (Windows-side helper) -------------
+# Adjust the Windows username in the path. On native Linux/macOS replace the
+# program line with the 1Password app's op-ssh-sign path, or remove the
+# [gpg "ssh"] / [core] sshCommand blocks entirely.
+[gpg "ssh"]
+	program = "/mnt/c/Users/<WINDOWS_USER>/AppData/Local/Microsoft/WindowsApps/op-ssh-sign-wsl.exe"
+
+[commit]
+	gpgsign = true
+
+[core]
+	# WSL: use the Windows OpenSSH client. Remove on native Linux/macOS.
+	sshCommand = ssh.exe

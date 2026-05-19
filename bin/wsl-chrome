@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# Open URLs/args in Windows Google Chrome from WSL. Used as $BROWSER and by
+# the open() shell function for http(s) links.
+exec "/mnt/c/Program Files/Google/Chrome/Application/chrome.exe" "$@"

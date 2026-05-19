@@ -1,1 +1,11 @@
+# Machine-specific git identity / commit signing (created from
+# .gitconfig.local.example by install.sh)
+.gitconfig.local
+
+# Bootstrapped by install.sh, not vendored
+.zsh/plugins/*
+!.zsh/plugins/.gitkeep
+bin/win32yank.exe
+
+# Legacy tmux plugin manager dir (tmux is now plugin-free)
 tmux/plugins
