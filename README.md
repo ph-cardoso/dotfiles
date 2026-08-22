@@ -37,6 +37,7 @@ Then set zsh as the default shell: `chsh -s "$(command -v zsh)"`.
 |---|---|
 | `.zsh/path.zsh` | PATH, cached Homebrew `shellenv`, pnpm, `$BROWSER` |
 | `.zsh/options.zsh` | history, completion (perf-cached `compinit` + `zcompile`), keybindings |
+| `.zsh/ssh-agent.zsh` | persistent `ssh-agent` across shells (cached env, PID-checked) |
 | `.zsh/theme.zsh` | Catppuccin Mocha palette → fzf / bat / eza |
 | `.zsh/tools.zsh` | cached inits: starship, zoxide, mise, uv/uvx, fzf |
 | `.zsh/aliases.zsh` | aliases (eza `ls`, `cd`→`zd`, git, …) |

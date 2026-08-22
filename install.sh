@@ -157,8 +157,9 @@ main() {
   setup_mise
   echo
   ok "Done. Open a new shell, or: exec zsh"
-  command -v zsh >/dev/null && [[ "${SHELL:-}" != *zsh ]] && \
+  if command -v zsh >/dev/null && [[ "${SHELL:-}" != *zsh ]]; then
     warn "Set zsh as default shell:  chsh -s \"\$(command -v zsh)\""
+  fi
 }
 
 main "$@"
