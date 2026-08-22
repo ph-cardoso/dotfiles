@@ -25,6 +25,8 @@ brew "neovim"
 brew "ripgrep"
 # Very fast implementation of tldr in Rust
 brew "tealdeer"
+# Cross-shell prompt
+brew "starship"
 # Terminal multiplexer
 brew "tmux"
 # Shell extension to navigate your filesystem faster
