@@ -1,4 +1,4 @@
--- Config location: %USERPROFILE%\.wezterm.lua
+-- Config location: ~/.wezterm.lua on every platform.
 local wezterm = require 'wezterm'
 local config = {}
 
@@ -9,22 +9,22 @@ if wezterm.config_builder then
 end
 
 wezterm.on("gui-startup", function(cmd)
-    local screen            = wezterm.gui.screens().active
-    local ratio             = 0.7
-    local width, height     = screen.width * ratio, screen.height * ratio
-    local tab, pane, window = wezterm.mux.spawn_window {
-        position = {
-            x = (screen.width - width) / 2,
-            y = (screen.height - height) / 2,
-            origin = 'ActiveScreen' }
-    }
+    local _, _, window = wezterm.mux.spawn_window(cmd or {})
     window:gui_window():maximize()
-    -- window:gui_window():set_inner_size(width, height)
 end)
 
-config.default_domain = 'WSL:Ubuntu-26.04'
+if wezterm.target_triple:find('windows') then
+    config.default_prog = { 'pwsh.exe', '-NoLogo' }
+    -- Optional: DOTFILES_WSL_DISTRO=Ubuntu-26.04 restores a WSL default.
+    if os.getenv('DOTFILES_WSL_DISTRO') then
+        config.default_domain = 'WSL:' .. os.getenv('DOTFILES_WSL_DISTRO')
+        config.default_prog = nil
+    end
+else
+    config.default_prog = { 'zsh', '-l' }
+end
 
-config.font = wezterm.font 'JetBrainsMono Nerd Font'
+config.font = wezterm.font_with_fallback { 'JetBrainsMono Nerd Font', 'JetBrains Mono' }
 config.font_size = 12
 config.default_cursor_style = 'BlinkingBar'
 config.animation_fps = 60
@@ -39,10 +39,16 @@ config.window_close_confirmation = 'NeverPrompt'
 -- browser, which is Edge). Ctrl+click is already a default WezTerm binding;
 -- this only redirects the target.
 wezterm.on('open-uri', function(window, pane, uri)
-    wezterm.background_child_process({
-        'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe', uri,
-    })
-    return false -- prevent the default open-uri handler
+    if wezterm.target_triple:find('windows') then
+        local chrome = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
+        local file = io.open(chrome, 'r')
+        if file then
+            file:close()
+            wezterm.background_child_process({ chrome, uri })
+            return false
+        end
+    end
+    -- Other platforms (or no Chrome): let WezTerm use the system browser.
 end)
 
 return config

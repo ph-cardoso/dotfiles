@@ -1,0 +1,20 @@
+[
+  "Git.Git",
+  "Microsoft.PowerShell",
+  "jdx.mise",
+  "Starship.Starship",
+  "ajeetdsouza.zoxide",
+  "junegunn.fzf",
+  "BurntSushi.ripgrep.MSVC",
+  "sharkdp.fd",
+  "sharkdp.bat",
+  "eza-community.eza",
+  "Fastfetch-cli.Fastfetch",
+  "GitHub.cli",
+  "jqlang.jq",
+  "Neovim.Neovim",
+  "JesseDuffield.lazygit",
+  "JesseDuffield.Lazydocker",
+  "dbrgn.tealdeer",
+  "astral-sh.uv"
+]

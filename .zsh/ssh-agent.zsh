@@ -7,9 +7,11 @@
 
 _ssh_agent_env="${XDG_CACHE_HOME:-$HOME/.cache}/zsh/ssh-agent.env"
 
-[[ -r "$_ssh_agent_env" ]] && source "$_ssh_agent_env" >/dev/null
+# Keep desktop/keychain/forwarded agents, even when they have no keys loaded.
+[[ -z "$SSH_AUTH_SOCK" && -r "$_ssh_agent_env" ]] && source "$_ssh_agent_env" >/dev/null
 
-if ! ssh-add -l &>/dev/null; then
+ssh-add -l &>/dev/null
+if (( $? == 2 )); then
   # A stale socket file can outlive its agent process, so check the PID too.
   if [[ -z "$SSH_AGENT_PID" ]] || ! kill -0 "$SSH_AGENT_PID" 2>/dev/null; then
     mkdir -p "${_ssh_agent_env:h}"

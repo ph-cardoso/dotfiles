@@ -1,4 +1,8 @@
 tap "jesseduffield/lazydocker"
+brew "git"
+brew "zsh"
+brew "uv"
+brew "lazygit"
 # Clone of cat(1) with syntax highlighting and Git integration
 brew "bat"
 # Modern, maintained replacement for ls
@@ -33,5 +37,5 @@ brew "tmux"
 brew "zoxide"
 # A simple terminal UI for docker, written in Go
 brew "jesseduffield/lazydocker/lazydocker"
-uv "pgcli"
-npm "corepack"
+# pgcli is installed by the bootstrap with uv after mise installs Python.
+# Node, Python and pnpm are managed by mise on every platform.

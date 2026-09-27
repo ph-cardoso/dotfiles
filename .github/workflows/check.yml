@@ -1,0 +1,37 @@
+name: Check dotfiles
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  unix:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install shell validation tools
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y zsh shellcheck
+      - name: Check Bash
+        if: runner.os == 'Linux'
+        run: shellcheck install.sh tests/install.sh
+      - name: Test configuration installation
+        run: bash tests/install.sh
+      - name: Check PowerShell profile syntax and startup
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Get-ChildItem .config/powershell/*.ps1 | ForEach-Object {
+            $tokens = $null; $errors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile($_.FullName, [ref]$tokens, [ref]$errors) > $null
+            if ($errors) { throw ($errors | Out-String) }
+          }
+          . ./.config/powershell/profile.ps1
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test configuration installation and PowerShell profile
+        shell: pwsh
+        run: ./tests/install.Tests.ps1

@@ -1,126 +1,184 @@
 # Dotfiles
 
-Personal development environment for **WSL2 (Ubuntu) under Windows**, themed
-end-to-end with **Catppuccin Mocha**. One script replicates it on a new machine.
-
-The repository is a **`$HOME` mirror**: paths here map directly under `$HOME`
-(plus `bin/` → `~/.local/bin/`). `install.sh` symlinks them into place.
+A Catppuccin Mocha development environment for **Windows, Linux, macOS and
+WSL2**. Native Windows uses **PowerShell 7 + WinGet**; Unix uses **zsh +
+Homebrew**. The PowerShell profile also works on Linux/macOS when `pwsh` is
+installed. Shared configs cover Starship, mise, bat, eza, fd, Neovim and WezTerm.
 
 ## Quick start
 
+Clone into a permanent location; shell profiles refer to this checkout.
+
+### Windows
+
+Install Git, PowerShell 7 and App Installer (WinGet), then open **PowerShell 7**:
+
+```powershell
+git clone https://github.com/ph-cardoso/dotfiles.git "$HOME/projects/dotfiles"
+cd "$HOME/projects/dotfiles"
+pwsh -NoProfile -File ./install.ps1
+```
+
+The installer prefers per-user WinGet packages. Packages that only provide a
+machine installer can display a Windows UAC prompt. It installs the CLI packages
+in `windows/packages.json`, deploys configs, and installs the mise runtimes and
+pgcli. Existing packages are kept at their installed versions.
+
+Open a **new terminal** after installation to pick up package PATH changes. If
+Windows execution policy blocks a local profile, use
+`Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` when allowed by your
+machine policy. The installer does not change execution policy.
+
+To deploy configs without downloading/installing tools:
+
+```powershell
+pwsh -NoProfile -File ./install.ps1 -SkipPackages -SkipRuntimes
+```
+
+### Linux / macOS / WSL
+
+Start with Git, Bash and curl. Linux also needs Homebrew's build prerequisites
+(e.g. `build-essential`, `procps`, `file`, `curl`, `git` on Ubuntu). WSL clipboard
+setup additionally uses `unzip`. On macOS, install Xcode Command Line Tools.
+See [Homebrew installation requirements](https://docs.brew.sh/Installation).
+
 ```bash
-git clone git@github.com:ph-cardoso/dotfiles.git ~/Personal/dotfiles
-~/Personal/dotfiles/install.sh
+git clone https://github.com/ph-cardoso/dotfiles.git ~/projects/dotfiles
+cd ~/projects/dotfiles
+bash install.sh
 exec zsh
 ```
 
-`install.sh` is idempotent (safe to re-run). It:
+The installer discovers Homebrew on Apple Silicon, Intel macOS and Linux;
+installs `Brewfile` packages, links configs, clones the zsh plugins, and installs
+runtimes. Failures return a nonzero exit code and can be retried.
 
-1. Installs Homebrew if missing and runs `brew bundle` against the `Brewfile`.
-2. Symlinks the `$HOME`-mirror config into place (existing real files backed
-   up once to `*.bak`).
-3. Creates `~/.gitconfig.local` from the example (edit it with your identity).
-4. Clones the zsh plugins into `.zsh/plugins/`.
-5. **WSL:** downloads `win32yank.exe` and copies the WezTerm config to the
-   Windows `%USERPROFILE%`.
-6. Runs `mise install` for language runtimes.
+```bash
+bash install.sh --config-only     # no network, package/runtime/plugin downloads
+bash install.sh --skip-packages   # keep installed packages; install everything else
+bash install.sh --help
+```
 
-Then set zsh as the default shell: `chsh -s "$(command -v zsh)"`.
+`--skip-runtimes` and `--skip-plugins` are also available. Choose zsh as your login
+shell with `chsh -s "$(command -v zsh)"` if desired (the shell must be listed in
+`/etc/shells`). PowerShell is optional on Unix: install it separately and the
+bootstrap configures its all-hosts profile as well.
 
-## What's inside
+## Tools and platform differences
 
-### Shell — zsh (`.zshrc` + `.zsh/`)
+| Component | All platforms | Unix / WSL additions |
+|---|---|---|
+| Runtimes | mise: Node 24, Python 3.14, pnpm 10 | Same versions/config |
+| Python tools | uv, uvx, pgcli | Same |
+| CLI | rg, fd, eza, bat, fzf, zoxide, fastfetch, gh, jq, tldr | navi, gcc |
+| Editor / Git UI | Neovim (LazyVim), lazygit | Same |
+| Prompt | Starship, Catppuccin Mocha | Same |
+| Docker UI | lazydocker | Same; Docker engine installed separately |
+| Multiplexer | WezTerm panes / optional WSL | tmux |
 
-`.zshrc` is a thin loader; real config is split into commented modules:
+The runtime entries pin release **series**, not exact patch versions. Projects
+can override them with their own mise config. pnpm is managed directly by mise;
+there is no second Homebrew/Corepack Node installation. Update the declared
+series in `.config/mise/config.toml` and rerun the installer.
 
-| Module | Responsibility |
+Install a terminal separately (WezTerm is configured if present). WezTerm uses
+bundled JetBrains Mono as a fallback if JetBrainsMono Nerd Font is absent.
+Native C/C++ build tools on Windows are optional and must be installed separately
+if a project or Neovim plugin needs a compiler. In Neovim run `:Lazy sync` and
+`:checkhealth` after first launch; plugins download on first use.
+
+## PowerShell
+
+`.config/powershell/profile.ps1` loads small modules for paths, theme, functions
+and PSReadLine. It guards optional tools so an incomplete install still starts.
+It uses the actual `$PROFILE.CurrentUserAllHosts` path, including redirected or
+OneDrive Documents folders; the same profile applies to console and VS Code.
+See [PowerShell profiles](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_profiles).
+
+| Shortcut | Behavior |
 |---|---|
-| `.zsh/path.zsh` | PATH, cached Homebrew `shellenv`, pnpm, `$BROWSER` |
-| `.zsh/options.zsh` | history, completion (perf-cached `compinit` + `zcompile`), keybindings |
-| `.zsh/ssh-agent.zsh` | persistent `ssh-agent` across shells (cached env, PID-checked) |
-| `.zsh/theme.zsh` | Catppuccin Mocha palette → fzf / bat / eza |
-| `.zsh/tools.zsh` | cached inits: starship, zoxide, mise, uv/uvx, fzf |
-| `.zsh/aliases.zsh` | aliases (eza `ls`, `cd`→`zd`, git, …) |
-| `.zsh/functions.zsh` | `zd`, WSL-aware `open()`, clipboard helpers |
-| `.zsh/fzf-widgets.zsh` | `Ctrl+Alt+F/L/V` fzf ZLE widgets |
+| `ll`, `la`, `lt`, `lta` | eza listings and trees |
+| `zd`, `z`, `zi` | direct paths / zoxide directory navigation |
+| `g`, `gcm`, `gcam`, `gcad` | Git and commit helpers |
+| `n`, `ff`, `eff` | Neovim, fuzzy file selection, edit selection |
+| `..`, `...`, `....` | parent directories |
+| `open`, `path`, `c` | OS opener, PATH listing, clear screen |
+| `pbcopy`, `pbpaste`, `clipimg` | Windows text and PNG clipboard helpers |
+| `rpwsh`, `epwsh` | reload / edit the profile loader |
+| `upd` | WinGet upgrades on Windows; Homebrew upgrades on Unix |
+| `Ctrl+R` | fuzzy history |
+| `Ctrl+T` / `Ctrl+Alt+F`, `Alt+C` | fuzzy file insertion / change directory |
+| `Ctrl+Alt+L`, `Ctrl+Alt+V` | insert a Git commit / variable |
+| Tab, Up / Down | menu completion / prefix history search |
 
-Tool init output is cached under `~/.cache/zsh/` and regenerated only when the
-binary changes — keeps startup ~0.3s.
+PowerShell's `ls`, `cat` and `cd` retain their object-oriented behavior; use `bat`
+or `zd` explicitly. `gcm` intentionally replaces the built-in Get-Command alias;
+use `Get-Command` by its full name. Keybindings require an interactive console.
 
-### Tooling (Homebrew — see `Brewfile`)
+Put private machine overrides in `profile.local.ps1` beside the all-hosts
+profile. Existing host-specific profiles still execute afterward: remove old
+duplicate tool initializers there if needed. The all-hosts profile replaced by
+installation is backed up, so custom settings can be moved into the local file.
 
-- **Runtimes:** `mise` (node, python — pinned in `.config/mise/config.toml`),
-  `uv`, `pnpm`
-- **CLI:** ripgrep, fd, eza, bat, zoxide, fzf, fastfetch, gh, lazygit,
-  lazydocker, neovim, tmux
-- **Prompt:** Starship — minimal layout, Catppuccin Mocha palette
-  (`.config/starship.toml`)
+## Config deployment and local settings
 
-### Theme — Catppuccin Mocha everywhere
+Both installers are safe to rerun. A changed destination is backed up beside the
+original as `*.bak.<unique suffix>`; an identical file/link is left alone. Backups
+are never overwritten. Restore a backup manually if you want to undo a change.
 
-WezTerm, tmux, fzf, bat, eza, Starship and Neovim/LazyVim all use Mocha. The
-palette lives once in `.zsh/theme.zsh`; each tool's own config matches it.
+- **Unix:** symlinks point into this checkout; changes apply immediately.
+- **Windows:** tool configs are copied, so no Developer Mode or symlink privilege
+  is required. Rerun `install.ps1 -SkipPackages -SkipRuntimes` after editing them.
+  The PowerShell loader references the checkout, so profile changes are immediate.
+- Shared configs use `$XDG_CONFIG_HOME` (default `~/.config`). Windows also gets
+  native Neovim config in `%LOCALAPPDATA%/nvim`, and bat/fd in `%APPDATA%` for use
+  outside PowerShell. PowerShell exports the shared tool config paths.
+- Git keeps the existing `~/.gitconfig` and adds a portable include. Identity,
+  credentials and SSH transport remain intact. Put machine overrides in
+  `~/.gitconfig.local`; the example has **no active identity or signing values**.
+  Configure signing only after choosing a real key and signer for that machine.
+- VS Code settings/extensions remain opt-in reference files under `vscode/`.
 
-### Editor — Neovim / LazyVim (`.config/nvim/`)
+Windows uses `~/.config/git/dotfiles` as its deployed portable Git include; Unix
+includes the repository's `.gitconfig` directly. Local Git overrides are read
+last by the shared file.
 
-LazyVim with the `catppuccin` (mocha) colorscheme. `lazy-lock.json` is
-committed for reproducible plugin versions; plugin clones are not vendored.
+## zsh / WSL / terminal
 
-### Terminal — WezTerm (`.config/wezterm/.wezterm.lua`)
+`.zshrc` loads modules in `.zsh/`: paths, completion/history, SSH agent, theme,
+cached tool initialization, aliases, functions and fzf widgets. The two zsh
+plugins are downloaded into `.zsh/plugins/`; generated files stay untracked.
+Desktop/keychain SSH agents are reused. WSL text clipboard uses win32yank and
+image clipboard uses `wsl-clip-img`. WSL-only helpers are not installed on native
+Linux/macOS; `open` uses the native OS opener there.
 
-Catppuccin Mocha, JetBrainsMono Nerd Font, WSL default domain. Ctrl+click on a
-link opens **Google Chrome** (overrides the Windows default browser) via an
-`open-uri` handler. Because the live file lives on the Windows side, the
-installer **copies** it to `%USERPROFILE%\.wezterm.lua` — re-run `install.sh`
-after editing it.
+WezTerm defaults to **PowerShell 7 on Windows** and **zsh on Unix**. To select a
+WSL default, set `DOTFILES_WSL_DISTRO` in the environment used to launch WezTerm,
+e.g. `Ubuntu-26.04`. It no longer assumes a particular installed distro. Windows
+links prefer Chrome when it exists; other platforms use their system browser.
+WSL setup only seeds a Windows WezTerm config if one does not exist, preserving
+configuration owned by the native Windows installer.
 
-### tmux (`.config/tmux/tmux.conf`)
+## Validation and review
 
-Hand-rolled, plugin-free, Catppuccin Mocha. Prefix `Ctrl-Space` (secondary
-`Ctrl-b`), vi copy mode, Alt-based pane/window navigation, OSC52 clipboard.
-
-### Git (`.gitconfig` + `~/.gitconfig.local`)
-
-`.gitconfig` holds portable settings (rebase pull, autoSetupRemote, histogram
-diff, rerere, aliases) and `[include]`s `~/.gitconfig.local` for
-machine-specific identity and 1Password SSH commit signing. The local file is
-**gitignored**; start from `.gitconfig.local.example`.
-
-### WSL clipboard
-
-- **Text:** `win32yank.exe` bridges the Windows clipboard (zsh `clip`/
-  `pbcopy`/`pbpaste`, Neovim `+`/`*` registers).
-- **Images:** `bin/wsl-clip-img` saves the Windows clipboard image to a PNG and
-  prints its path (alias `clipimg`) — for pasting screenshots into coding
-  agents.
-
-## Directory structure
-
-```
-dotfiles/
-├── install.sh                 # idempotent bootstrap
-├── Brewfile                   # Homebrew bundle (brew bundle dump)
-├── .gitconfig                 # portable git config
-├── .gitconfig.local.example   # template → ~/.gitconfig.local (gitignored)
-├── .zshrc                     # thin loader
-├── .zsh/                      # zsh modules + plugins/ (bootstrapped)
-├── .config/
-│   ├── starship.toml          # minimal Catppuccin Mocha prompt
-│   ├── bat/ eza/ fd/ mise/    # CLI tool configs
-│   ├── tmux/tmux.conf
-│   ├── wezterm/.wezterm.lua   # copied to Windows %USERPROFILE%
-│   └── nvim/                  # LazyVim config + lazy-lock.json
-├── bin/                       # → ~/.local/bin (wsl-chrome, wsl-clip-img, …)
-└── vscode/                    # VS Code settings + recommended extensions
+```powershell
+pwsh -NoProfile -File tests/install.Tests.ps1
 ```
 
-## Replicating on a new machine
+```bash
+bash tests/install.sh
+shellcheck install.sh tests/install.sh
+```
 
-1. Install [WSL2 + Ubuntu](https://learn.microsoft.com/windows/wsl/install) and
-   [WezTerm](https://wezfurlong.org/wezterm/) on Windows.
-2. `git clone` this repo and run `install.sh`.
-3. Edit `~/.gitconfig.local` (identity + your 1Password signing path).
-4. `exec zsh`; in Neovim run `:Lazy sync`.
+Tests use temporary destinations: reruns, backups, dangling Unix links, custom
+XDG paths, Windows paths with spaces/apostrophes, preserved Git settings, and
+PowerShell startup. `.github/workflows/check.yml` runs Windows, Ubuntu and macOS
+checks. The test-only `DOTFILES_TARGET_HOME` environment variable selects a Unix
+fixture destination; normal installs should leave it unset. Windows tests use
+explicit destination parameters.
 
-To refresh the Homebrew list after installing new tools:
-`brew bundle dump --force --describe --file=~/Personal/dotfiles/Brewfile`.
+The cross-platform review addressed the original WSL-only installer, forced WSL
+terminal domain, hardcoded username, GNU-only macOS operations, missing Brewfile
+dependencies, destructive replacement when a backup already existed, and active
+placeholder Git signing. Full package downloads and interactive GUI/editor
+behavior are separate from the offline installer tests.

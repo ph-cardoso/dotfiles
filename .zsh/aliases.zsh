@@ -2,7 +2,7 @@
 alias rzsh="source ~/.zshrc && echo '~/.zshrc reloaded!'"
 alias ezsh="zed ~/.zshrc"
 alias c="clear"
-alias upd="sudo apt update && sudo apt upgrade -y && sudo apt autoremove -y && brew upgrade"
+# upd is platform-aware (functions.zsh).
 
 # ~~~~~~~~~~~~~~~ Modern CLI replacements ~~~~~~~~~~~~~~~
 alias grep="rg"  # https://github.com/BurntSushi/ripgrep
@@ -21,7 +21,7 @@ alias ..='cd ..'
 alias ...='cd ../..'
 alias ....='cd ../../..'
 # zoxide-powered cd (zd defined in functions.zsh)
-alias cd="zd"
+command -v zoxide &>/dev/null && alias cd="zd"
 
 # ~~~~~~~~~~~~~~~ Git ~~~~~~~~~~~~~~~
 alias g='git'
@@ -33,4 +33,4 @@ alias gcad='git commit -a --amend'
 alias t='tmux attach || tmux new -s Work'
 alias eff='$EDITOR "$(ff)"'
 # Save Windows-clipboard image to a PNG and print its path (paste into agents)
-alias clipimg='wsl-clip-img'
+command -v wsl-clip-img &>/dev/null && alias clipimg='wsl-clip-img'

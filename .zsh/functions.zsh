@@ -46,7 +46,7 @@ fi
 sff() {
   if [ $# -eq 0 ]; then echo "Usage: sff <destination> (e.g. sff host:/tmp/)"; return 1; fi
   local file
-  file=$(command find . -type f -printf '%T@\t%p\n' | sort -rn | cut -f2- | ff) \
+  file=$(print -rl -- **/*(.om) | ff) \
     && [ -n "$file" ] && scp "$file" "$1"
 }
 
@@ -54,6 +54,14 @@ sff() {
 # http(s) links → Windows Chrome; local files/dirs → Windows Explorer.
 # (xdg-open is mostly a no-op under WSL.)
 open() (
+  if [[ "$OSTYPE" == darwin* ]]; then
+    command open "$@"
+    return
+  fi
+  if ! command -v explorer.exe &>/dev/null; then
+    xdg-open "$@" >/dev/null 2>&1 &
+    return
+  fi
   case "$1" in
     http://*|https://*)
       if [[ -x "$HOME/.local/bin/wsl-chrome" ]]; then
@@ -71,3 +79,10 @@ open() (
       ;;
   esac
 )
+
+upd() {
+  if [[ "$OSTYPE" == linux* ]] && command -v apt &>/dev/null; then
+    sudo apt update && sudo apt upgrade -y || return
+  fi
+  if command -v brew &>/dev/null; then brew update && brew upgrade; fi
+}

@@ -35,6 +35,3 @@ source "$ZDOTDIR_MODULES/functions.zsh"
 # defined above (fzf + custom widgets).
 [[ -f $ZDOTDIR_MODULES/plugins/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh ]] && \
   source "$ZDOTDIR_MODULES/plugins/fast-syntax-highlighting/fast-syntax-highlighting.plugin.zsh"
-
-# Opencode
-export PATH=/home/ph-cardoso/.opencode/bin:$PATH

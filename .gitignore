@@ -9,3 +9,7 @@ bin/win32yank.exe
 
 # Legacy tmux plugin manager dir (tmux is now plugin-free)
 tmux/plugins
+
+# Machine overrides and non-destructive installer backups
+profile.local.ps1
+*.bak.*
