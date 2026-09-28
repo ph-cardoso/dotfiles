@@ -5,6 +5,7 @@
 set -euo pipefail
 repo="$(cd "$(dirname "$0")/.." && pwd)"
 fixture="$(mktemp -d "${TMPDIR:-/tmp}/dotfiles-test.XXXXXX")"
+fixture="$(cd "$fixture" && pwd -P)"
 trap 'rm -rf "$fixture"' EXIT
 target="$fixture/home with spaces"
 export DOTFILES_TARGET_HOME="$target"
@@ -102,6 +103,7 @@ SH
   chmod +x "$fixture/bin/nvim"
   DOTFILES_EDITOR_LOG="$fixture/editor" DOTFILES_MOCK_BIN="$fixture/bin" fish -c '
     set -gx PATH $DOTFILES_MOCK_BIN $PATH
+    set -e EDITOR
     function ff; printf "%s\0" "file with spaces" "file
 with newline"; end
     eff
