@@ -13,3 +13,9 @@ tmux/plugins
 # Machine overrides and non-destructive installer backups
 profile.local.ps1
 *.bak.*
+
+# Fish keeps per-machine state and overrides outside version control.
+.config/fish/fish_variables
+.config/fish/config.local.fish
+.config/fish/fish_plugins
+*_history

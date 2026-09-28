@@ -1,8 +1,9 @@
 # Dotfiles
 
 A Catppuccin Mocha development environment for **Windows, Linux, macOS and
-WSL2**. Native Windows uses **PowerShell 7 + WinGet**; Unix uses **zsh +
-Homebrew**. The PowerShell profile also works on Linux/macOS when `pwsh` is
+WSL2**. Native Windows uses **PowerShell 7 + WinGet**; Unix supports **Fish or
+Zsh**, with **paru on Arch/CachyOS** and **Homebrew on other Linux/macOS systems**.
+The PowerShell profile also works on Linux/macOS when `pwsh` is
 installed. Shared configs cover Starship, mise, bat, eza, fd, Neovim and WezTerm.
 
 ## Quick start
@@ -37,30 +38,41 @@ pwsh -NoProfile -File ./install.ps1 -SkipPackages -SkipRuntimes
 
 ### Linux / macOS / WSL
 
-Start with Git, Bash and curl. Linux also needs Homebrew's build prerequisites
+Start with Git, Bash and curl. Arch/CachyOS uses native packages; install `paru`
+first if you want AUR support (CachyOS includes it). Auto detection prefers
+`paru`, then falls back to `pacman` on Arch. Other Linux distributions need Homebrew's build prerequisites
 (e.g. `build-essential`, `procps`, `file`, `curl`, `git` on Ubuntu). WSL clipboard
 setup additionally uses `unzip`. On macOS, install Xcode Command Line Tools.
 See [Homebrew installation requirements](https://docs.brew.sh/Installation).
 
 ```bash
-git clone https://github.com/ph-cardoso/dotfiles.git ~/projects/dotfiles
-cd ~/projects/dotfiles
-bash install.sh
-exec zsh
+gh repo clone ph-cardoso/dotfiles ~/dev-projects/dotfiles
+cd ~/dev-projects/dotfiles
+bash install.sh --shell fish
+exec fish
 ```
 
-The installer discovers Homebrew on Apple Silicon, Intel macOS and Linux;
-installs `Brewfile` packages, links configs, clones the zsh plugins, and installs
-runtimes. Failures return a nonzero exit code and can be retried.
+Use `--shell zsh` to choose Zsh instead; omitting `--shell` retains the original
+Zsh default. Only the selected shell's configuration and plugins are deployed.
+Switching later preserves the other shell's files. Fish needs no plugin manager.
+
+The installer installs packages from `linux/arch-packages.txt` on Arch/CachyOS,
+or `Brewfile` through Homebrew elsewhere, then links configs and installs runtimes.
+The Arch backend runs a full sync/upgrade with `--needed --noconfirm` to avoid
+partial upgrades. `paru` runs as your regular user and invokes sudo when needed.
+No AUR-only packages are required by the current manifest. Failures return a
+nonzero exit code and can be retried.
 
 ```bash
-bash install.sh --config-only     # no network, package/runtime/plugin downloads
-bash install.sh --skip-packages   # keep installed packages; install everything else
+bash install.sh --shell fish --package-manager paru
+bash install.sh --shell zsh --package-manager brew
+bash install.sh --shell fish --config-only     # no downloads
+bash install.sh --shell fish --skip-packages   # keep existing packages
 bash install.sh --help
 ```
 
-`--skip-runtimes` and `--skip-plugins` are also available. Choose zsh as your login
-shell with `chsh -s "$(command -v zsh)"` if desired (the shell must be listed in
+`--skip-runtimes` and `--skip-plugins` are also available. Choose Fish as your login
+shell with `chsh -s "$(command -v fish)"`, or substitute `zsh` (the shell must be listed in
 `/etc/shells`). PowerShell is optional on Unix: install it separately and the
 bootstrap configures its all-hosts profile as well.
 
@@ -70,11 +82,14 @@ bootstrap configures its all-hosts profile as well.
 |---|---|---|
 | Runtimes | mise: Node 24, Python 3.14, pnpm 10 | Same versions/config |
 | Python tools | uv, uvx, pgcli | Same |
-| CLI | rg, fd, eza, bat, fzf, zoxide, fastfetch, gh, jq, tldr | navi, gcc |
+| CLI | rg, fd, eza, bat, fzf, zoxide, fastfetch, gh, jq, tldr | navi, gcc, usage |
 | Editor / Git UI | Neovim (LazyVim), lazygit | Same |
 | Prompt | Starship, Catppuccin Mocha | Same |
 | Docker UI | lazydocker | Same; Docker engine installed separately |
 | Multiplexer | WezTerm panes / optional WSL | tmux |
+
+The Arch package list includes `postgresql-libs`, which pgcli's PostgreSQL driver
+needs at runtime; no database server is installed by the bootstrap.
 
 The runtime entries pin release **series**, not exact patch versions. Projects
 can override them with their own mise config. pnpm is managed directly by mise;
@@ -152,12 +167,72 @@ Desktop/keychain SSH agents are reused. WSL text clipboard uses win32yank and
 image clipboard uses `wsl-clip-img`. WSL-only helpers are not installed on native
 Linux/macOS; `open` uses the native OS opener there.
 
-WezTerm defaults to **PowerShell 7 on Windows** and **zsh on Unix**. To select a
+WezTerm defaults to **PowerShell 7 on Windows** and **your login shell on Unix**. To select a
 WSL default, set `DOTFILES_WSL_DISTRO` in the environment used to launch WezTerm,
 e.g. `Ubuntu-26.04`. It no longer assumes a particular installed distro. Windows
 links prefer Chrome when it exists; other platforms use their system browser.
 WSL setup only seeds a Windows WezTerm config if one does not exist, preserving
 configuration owned by the native Windows installer.
+
+## Fish
+
+Requires Fish 3.6+ and fzf 0.48+ for its native keybindings. `config.fish` loads
+the environment for every shell; prompt, abbreviations, theme and interactive
+integrations run only in interactive sessions. Helpers are autoloaded from
+individual `functions/*.fish` files. Fish supplies autosuggestions, highlighting
+and completions; Starship supplies the prompt. Packaged completions are reused.
+
+Paths use `fish_add_path --path`, so startup does not repeatedly write universal
+variables. mise shims expose Node/Python/pnpm in scripts and before the first
+prompt, while `mise activate fish` switches versions as you navigate projects.
+Inherited SSH agents are reused; on Linux, existing OpenSSH, gcr and keyring
+sockets are discovered. Starting a terminal never launches another agent or
+prompts to unlock keys. CachyOS's vendor Pure prompt hooks are shadowed to avoid
+two prompt implementations running together.
+
+| Shortcut | Behavior |
+|---|---|
+| `ls`, `ll`, `la` / `lsa`, `lt`, `lta` | Expand into eza listings/trees |
+| `g`, `gcm`, `gcam`, `gcad` | Expand into Git commands |
+| `cat` | Expands into bat; scripts retain the real `cat` |
+| `z`, `zi`, `zd` | Zoxide navigation; `zd` also accepts direct paths |
+| `n`, `ff`, `eff`, `sff host:/path` | Editor, fuzzy selection, edit/send selected files |
+| `t` | Attach to tmux or create the Work session |
+| `..`, `...`, `....`, `c` | Parent directories and clear screen |
+| `pbcopy`, `pbpaste` | Wayland, WSL or native macOS clipboard |
+| `upd` | paru system/AUR updates, pacman fallback; apt/Homebrew elsewhere |
+| `rfish`, `efish` | Restart Fish / edit its config |
+| `Ctrl+R`, `Ctrl+T`, `Alt+C` | Fuzzy history, file insertion, directory selection |
+
+Abbreviations expand when you type Space or Enter, so history contains the real
+command. `cd`, `find`, `grep` and Fish's built-in `path` keep their native behavior.
+Put private settings in `~/.config/fish/config.local.fish` (or the corresponding
+XDG location); it loads last. Existing Fish history, universal variables, personal
+functions and local overrides survive installation. Managed files are backed up
+individually. Keep the checkout in a permanent location because configs link to it.
+
+The setup does not change the login shell automatically or manage Kitty,
+Alacritty, Hyprland, Noctalia, boot themes or desktop shortcuts. See the
+[Omarchy feature report](docs/omarchy-reference.md) for optional additions to evaluate.
+
+### SSH on a new Arch/CachyOS machine
+
+Provision keys separately with private files at mode `600` and `~/.ssh` at `700`.
+Enable the packaged OpenSSH user socket with
+`systemctl --user enable --now ssh-agent.socket`. The Fish config will discover
+it after login. Add custom-named keys explicitly, for example
+`ssh-add ~/.ssh/github_ed25519`. For automatic loading on first GitHub use, add
+this to your private `~/.ssh/config`:
+
+```sshconfig
+Host github.com
+    User git
+    IdentityFile ~/.ssh/github_ed25519
+    IdentitiesOnly yes
+    AddKeysToAgent yes
+```
+
+Never commit private keys, tokens, Fish state or machine-specific Git identity.
 
 ## Validation and review
 
@@ -170,7 +245,9 @@ bash tests/install.sh
 shellcheck install.sh tests/install.sh
 ```
 
-Tests use temporary destinations: reruns, backups, dangling Unix links, custom
+Tests use temporary destinations: Fish/Zsh selection, mocked paru dispatch,
+quiet Fish startup, local state preservation, filename-safe helpers, reruns,
+backups, dangling Unix links, custom
 XDG paths, Windows paths with spaces/apostrophes, preserved Git settings, and
 PowerShell startup. `.github/workflows/check.yml` runs Windows, Ubuntu and macOS
 checks. The test-only `DOTFILES_TARGET_HOME` environment variable selects a Unix

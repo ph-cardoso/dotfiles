@@ -20,9 +20,8 @@ if wezterm.target_triple:find('windows') then
         config.default_domain = 'WSL:' .. os.getenv('DOTFILES_WSL_DISTRO')
         config.default_prog = nil
     end
-else
-    config.default_prog = { 'zsh', '-l' }
 end
+-- Unix follows the user's login shell, including Fish (no hardcoded Zsh).
 
 config.font = wezterm.font_with_fallback { 'JetBrainsMono Nerd Font', 'JetBrains Mono' }
 config.font_size = 12

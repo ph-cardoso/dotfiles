@@ -1,0 +1,26 @@
+# Native equivalents of Brewfile; the selected shell is added by install.sh.
+base-devel
+bat
+curl
+eza
+fastfetch
+fd
+fzf
+git
+github-cli
+jq
+lazydocker
+lazygit
+mise
+navi
+neovim
+openssh
+postgresql-libs
+ripgrep
+starship
+tealdeer
+tmux
+unzip
+usage
+uv
+zoxide

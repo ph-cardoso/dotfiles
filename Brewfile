@@ -1,6 +1,6 @@
 tap "jesseduffield/lazydocker"
 brew "git"
-brew "zsh"
+brew ENV.fetch("DOTFILES_SHELL", "zsh")
 brew "uv"
 brew "lazygit"
 # Clone of cat(1) with syntax highlighting and Git integration
@@ -21,6 +21,7 @@ brew "gh"
 brew "jq"
 # Polyglot runtime manager (asdf rust clone)
 brew "mise"
+brew "usage"
 # Interactive cheatsheet tool for the command-line
 brew "navi"
 # Ambitious Vim-fork focused on extensibility and agility

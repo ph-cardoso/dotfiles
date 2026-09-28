@@ -5,16 +5,33 @@ DOTFILES="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DEST_HOME="${DOTFILES_TARGET_HOME:-$HOME}"
 CONFIG_HOME="${XDG_CONFIG_HOME:-$DEST_HOME/.config}"
 SKIP_PACKAGES=0; SKIP_RUNTIMES=0; SKIP_PLUGINS=0; CONFIG_ONLY=0
-for arg in "$@"; do
-  case "$arg" in
+SELECTED_SHELL=zsh; PACKAGE_MANAGER=auto
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --shell|--package-manager)
+      [[ $# -ge 2 ]] || { printf 'Missing value for %s\n' "$1" >&2; exit 2; }
+      case "$1" in
+        --shell) SELECTED_SHELL="$2" ;;
+        --package-manager) PACKAGE_MANAGER="$2" ;;
+      esac
+      shift ;;
     --skip-packages) SKIP_PACKAGES=1 ;;
     --skip-runtimes) SKIP_RUNTIMES=1 ;;
     --skip-plugins) SKIP_PLUGINS=1 ;;
     --config-only) CONFIG_ONLY=1; SKIP_PACKAGES=1; SKIP_RUNTIMES=1; SKIP_PLUGINS=1 ;;
-    --help|-h) printf '%s\n' 'Usage: bash install.sh [--config-only] [--skip-packages] [--skip-runtimes] [--skip-plugins]'; exit 0 ;;
-    *) printf 'Unknown option: %s\n' "$arg" >&2; exit 2 ;;
+    --help|-h)
+      printf '%s\n' 'Usage: bash install.sh [options]' \
+        '  --shell fish|zsh                 Shell to configure (default: zsh)' \
+        '  --package-manager auto|paru|pacman|brew  Prefer paru on Arch/CachyOS, brew elsewhere' \
+        '  --config-only                   Offline config deployment only' \
+        '  --skip-packages --skip-runtimes --skip-plugins'
+      exit 0 ;;
+    *) printf 'Unknown option: %s\n' "$1" >&2; exit 2 ;;
   esac
+  shift
 done
+case "$SELECTED_SHELL" in fish|zsh) ;; *) printf 'Invalid shell: %s\n' "$SELECTED_SHELL" >&2; exit 2 ;; esac
+case "$PACKAGE_MANAGER" in auto|paru|pacman|brew) ;; *) printf 'Invalid package manager: %s\n' "$PACKAGE_MANAGER" >&2; exit 2 ;; esac
 info() { printf '==> %s\n' "$*"; }
 warn() { printf '  ! %s\n' "$*" >&2; }
 OS=unknown; IS_WSL=0
@@ -23,6 +40,12 @@ case "$(uname -s)" in
   Linux) OS=linux; if grep -qiE 'microsoft|wsl' /proc/sys/kernel/osrelease 2>/dev/null; then IS_WSL=1; fi ;;
   *) warn 'Use install.ps1 from PowerShell 7 on native Windows.'; exit 1 ;;
 esac
+if [[ $PACKAGE_MANAGER == auto ]]; then
+  if [[ $OS == linux && -f /etc/arch-release ]]; then
+    if command -v paru >/dev/null; then PACKAGE_MANAGER=paru; else PACKAGE_MANAGER=pacman; fi
+  else PACKAGE_MANAGER=brew; fi
+fi
+if [[ $PACKAGE_MANAGER != brew && $OS != linux ]]; then warn 'paru/pacman require Arch Linux or a derivative'; exit 2; fi
 
 # Never discard a newer config just because an older backup exists.
 backup() {
@@ -70,7 +93,21 @@ install_brew() {
     rm -f "$installer"
     load_brew
   fi
-  brew bundle --no-upgrade --file="$DOTFILES/Brewfile"
+  DOTFILES_SHELL="$SELECTED_SHELL" brew bundle --no-upgrade --file="$DOTFILES/Brewfile"
+}
+install_arch_packages() {
+  command -v "$PACKAGE_MANAGER" >/dev/null || { warn "$PACKAGE_MANAGER is required for the selected backend"; exit 1; }
+  local package packages=("$SELECTED_SHELL")
+  while IFS= read -r package; do
+    [[ -z "$package" || "$package" == \#* ]] || packages+=("$package")
+  done < "$DOTFILES/linux/arch-packages.txt"
+  if [[ $IS_WSL == 0 ]]; then packages+=(wl-clipboard ttf-jetbrains-mono-nerd); fi
+  # Refresh and upgrade together: Arch does not support partial upgrades.
+  if [[ $PACKAGE_MANAGER == paru ]]; then
+    paru -Syu --needed --noconfirm "${packages[@]}"
+  else
+    sudo pacman -Syu --needed --noconfirm "${packages[@]}"
+  fi
 }
 
 setup_git() {
@@ -90,8 +127,18 @@ setup_git() {
 link_dotfiles() {
   local name file profile_dir
   mkdir -p "$DEST_HOME" "$CONFIG_HOME" "$DEST_HOME/.local/bin"
-  link .zshrc "$DEST_HOME/.zshrc"
-  link .zsh "$DEST_HOME/.zsh"
+  if [[ $SELECTED_SHELL == fish ]]; then
+    # Keep universal variables, history, local functions and plugin files local.
+    link .config/fish/config.fish "$CONFIG_HOME/fish/config.fish"
+    link .config/fish/dotfiles "$CONFIG_HOME/fish/dotfiles"
+    for file in "$DOTFILES"/.config/fish/functions/*.fish "$DOTFILES"/.config/fish/conf.d/*.fish; do
+      name="${file#"$DOTFILES/.config/fish/"}"
+      link ".config/fish/$name" "$CONFIG_HOME/fish/$name"
+    done
+  else
+    link .zshrc "$DEST_HOME/.zshrc"
+    link .zsh "$DEST_HOME/.zsh"
+  fi
   for name in tmux bat eza mise nvim fd; do link ".config/$name" "$CONFIG_HOME/$name"; done
   link .config/starship.toml "$CONFIG_HOME/starship.toml"
   link .config/wezterm/.wezterm.lua "$DEST_HOME/.wezterm.lua"
@@ -148,15 +195,18 @@ setup_runtimes() {
   mise --cd "$DEST_HOME" exec -- uv tool install --python 3.14 pgcli
 }
 main() {
-  info "Platform: $OS (WSL=$IS_WSL)"
-  if [[ $SKIP_PACKAGES == 0 ]]; then install_brew; else load_brew || true; fi
+  info "Platform: $OS (WSL=$IS_WSL), shell: $SELECTED_SHELL, packages: $PACKAGE_MANAGER"
+  if [[ $SKIP_PACKAGES == 0 ]]; then
+    if [[ $PACKAGE_MANAGER == brew ]]; then install_brew; else install_arch_packages; fi
+  elif [[ $PACKAGE_MANAGER == brew ]]; then load_brew || true; fi
   link_dotfiles
-  if [[ $SKIP_PLUGINS == 0 ]]; then install_zsh_plugins; fi
+  if [[ $SELECTED_SHELL == zsh && $SKIP_PLUGINS == 0 ]]; then install_zsh_plugins; fi
   if [[ $CONFIG_ONLY == 0 ]]; then install_wsl_helpers; fi
   if [[ $SKIP_RUNTIMES == 0 ]]; then setup_runtimes; fi
-  info 'Done. Open a new terminal (zsh or PowerShell 7).'
+  info "Done. Open a new terminal or run: exec $SELECTED_SHELL"
   # Print the command for the user to run.
   # shellcheck disable=SC2016
-  info 'Edit ~/.gitconfig.local for identity/signing. To choose zsh: chsh -s "$(command -v zsh)"'
+  info "To set your login shell: chsh -s \"\$(command -v $SELECTED_SHELL)\""
+  info 'Keep machine-specific identity/signing in ~/.gitconfig.local.'
 }
 main

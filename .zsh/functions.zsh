@@ -81,6 +81,10 @@ open() (
 )
 
 upd() {
+  if command -v pacman &>/dev/null; then
+    if command -v paru &>/dev/null; then paru -Syu || return
+    else sudo pacman -Syu || return; fi
+  fi
   if [[ "$OSTYPE" == linux* ]] && command -v apt &>/dev/null; then
     sudo apt update && sudo apt upgrade -y || return
   fi
